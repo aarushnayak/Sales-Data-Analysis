@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Load Dataset
+## Load Dataset
 df = pd.read_csv("data/sales_data.csv")
 
 # Show First 5 Rows
