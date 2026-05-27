@@ -68,4 +68,4 @@ python analysis.py
 
 ---
 
-⭐ *Agar project pasand aaya toh star zaroor karo!*
+⭐ If you found this project useful, consider giving it a star on GitHub!
