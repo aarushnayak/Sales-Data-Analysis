@@ -1,0 +1,11 @@
+Order_ID,Date,Customer,Product,Category,Region,Quantity,Price,Sales,Profit
+1001,2025-01-05,Aarav,Laptop,Electronics,North,2,55000,110000,15000
+1002,2025-01-07,Simran,Phone,Electronics,West,3,25000,75000,12000
+1003,2025-01-10,Rahul,Headphones,Accessories,South,5,2000,10000,3000
+1004,2025-01-12,Priya,Keyboard,Accessories,East,4,1500,6000,1800
+1005,2025-01-15,Aman,Monitor,Electronics,North,2,12000,24000,5000
+1006,2025-01-18,Neha,Mouse,Accessories,West,6,800,4800,1200
+1007,2025-01-20,Rohit,Tablet,Electronics,South,1,30000,30000,7000
+1008,2025-01-22,Karan,Printer,Electronics,East,2,9000,18000,4000
+1009,2025-01-25,Anjali,Speaker,Accessories,North,3,3500,10500,2500
+1010,2025-01-28,Vikas,Camera,Electronics,West,1,45000,45000,10000
