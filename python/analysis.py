@@ -41,7 +41,7 @@ top_products.plot(kind="pie", autopct='%1.1f%%')
 
 plt.title("Product Sales Share")
 plt.ylabel("")
-# Save Chart
+## Save Chart
 plt.savefig("reports/region_sales_chart.png")
 
 print("\nChart Saved Successfully!")
