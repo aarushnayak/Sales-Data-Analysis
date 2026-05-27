@@ -64,7 +64,7 @@ python analysis.py
 
 ## 👤 Author
 
-**Aarush Nayak**
+* Aarush Nayak**
 
 ---
 
