@@ -1,4 +1,4 @@
-## 📊 Sales Data Analysis
+#📊 Sales Data Analysis...
 
 > A full-stack data analysis pipeline — SQL meets Python for deep business intelligence.
 
