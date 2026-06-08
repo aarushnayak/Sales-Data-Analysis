@@ -9,4 +9,4 @@ Order_ID,Date,Customer,Product,Category,Region,Quantity,Price,Sales,Profit
 1008,2025-01-22,Karan,Printer,Electronics,East,2,9000,18000,4000
 1009,2025-01-25,Anjali,Speaker,Accessories,North,3,3500,10500,2500
 1010,2025-01-28,Vikas,Camera,Electronics,West,1,45000,45000,10000
-#new
+
