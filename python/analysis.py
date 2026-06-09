@@ -1,5 +1,5 @@
 import pandas as pd
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as pl
 
 ## Load Dataset
 df = pd.read_csv("data/sales_data.csv")
