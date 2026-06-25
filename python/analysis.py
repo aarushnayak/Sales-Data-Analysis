@@ -16,7 +16,7 @@ print("\nTOTAL SALES:", total_sales)
 total_profit = df["Profit"].sum()
 print("\nTOTAL PROFIT:", total_profit)
 
-# Region Wise Sales
+# Region Wise Sale
 region_sales = df.groupby("Region")["Sales"].sum()
 
 print("\nREGION WISE SALES:\n")
