@@ -35,13 +35,11 @@ def load_sales_data(path: Path) -> pd.DataFrame:
     data["Date"] = pd.to_datetime(data["Date"], errors="coerce")
     data = data.dropna(subset=["Date", "Sales", "Profit", "Quantity"]).copy()
 
-    # Flag suspicious values for review. Never rewrite source records automatically.
-    data["Quality_Issue"] = ""
-    data.loc[data["Profit"] > data["Sales"], "Quality_Issue"] = (
-        "Reported profit exceeds reported sales — verify source record"
-    )
-    data.loc[data["Sales"] < 0, "Quality_Issue"] = "Negative sales value — verify source record"
-    data.loc[data["Profit"] < 0, "Quality_Issue"] = "Negative profit value — verify source record"
+    # Short, readable labels for tables. Full explanations appear in the review panel.
+    data["Quality_Issue"] = "✅ OK"
+    data.loc[data["Profit"] > data["Sales"], "Quality_Issue"] = "⚠ Profit > Sales"
+    data.loc[data["Sales"] < 0, "Quality_Issue"] = "⚠ Negative sales"
+    data.loc[data["Profit"] < 0, "Quality_Issue"] = "⚠ Negative profit"
     return data
 
 
@@ -79,8 +77,28 @@ if not source_issues.empty:
             "Order_ID", "Date", "Product", "Region", "Sales", "Profit", "Quality_Issue"
         ]
         issue_view = source_issues[issue_columns].copy()
+        issue_view["Why flagged"] = issue_view["Quality_Issue"].map(
+            {
+                "⚠ Profit > Sales": "Reported profit is greater than sales. Verify the original record.",
+                "⚠ Negative sales": "Sales is negative. Verify the source transaction.",
+                "⚠ Negative profit": "Profit is negative. Verify the source transaction.",
+            }
+        )
         issue_view["Profit minus Sales"] = issue_view["Profit"] - issue_view["Sales"]
-        st.dataframe(issue_view, use_container_width=True, hide_index=True)
+        st.dataframe(
+            issue_view,
+            width="stretch",
+            hide_index=True,
+            column_config={
+                "Quality_Issue": st.column_config.TextColumn("Quality flag", width="medium"),
+                "Why flagged": st.column_config.TextColumn("Why flagged", width="large"),
+                "Profit minus Sales": st.column_config.NumberColumn(
+                    "Profit − Sales", format="₹ %.0f", width="medium"
+                ),
+                "Sales": st.column_config.NumberColumn("Sales", format="₹ %.0f"),
+                "Profit": st.column_config.NumberColumn("Profit", format="₹ %.0f"),
+            },
+        )
         st.download_button(
             "⬇️ Download flagged records",
             data=issue_view.to_csv(index=False).encode("utf-8"),
@@ -106,7 +124,7 @@ regions = sorted(sales_df["Region"].dropna().unique().tolist())
 # Initialise every region as selected, including North. The button restores all.
 if "selected_regions" not in st.session_state:
     st.session_state["selected_regions"] = regions
-if st.sidebar.button("Select all regions", use_container_width=True):
+if st.sidebar.button("Select all regions", width="stretch"):
     st.session_state["selected_regions"] = regions
 selected_regions = st.sidebar.multiselect(
     "Region",
@@ -200,7 +218,7 @@ else:
             title="Daily sales trend",
             labels={"Sales": "Sales (₹)", "Order_Date": "Order date"},
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     with right:
         st.subheader("Sales by region")
@@ -259,8 +277,17 @@ display_columns = [
 ]
 st.dataframe(
     filtered[display_columns].sort_values("Date", ascending=False),
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
+    column_config={
+        "Quality_Issue": st.column_config.TextColumn(
+            "Quality status",
+            help="⚠ marks a record that needs review; ✅ OK means no basic rule was triggered.",
+            width="medium",
+        ),
+        "Sales": st.column_config.NumberColumn("Sales", format="₹ %.0f"),
+        "Profit": st.column_config.NumberColumn("Profit", format="₹ %.0f"),
+    },
 )
 st.download_button(
     "⬇️ Download filtered data (CSV)",
@@ -271,18 +298,19 @@ st.download_button(
 
 st.divider()
 
-# Project ownership and portfolio links
-footer_left, footer_right = st.columns([2, 1])
-with footer_left:
-    st.markdown("### Developed & Designed by Aarush Nayak")
-    st.caption("Python • Data Analytics • SQL • Dashboard Development")
-with footer_right:
-    st.markdown(
-        "[GitHub Repository](https://github.com/aarushnayak/Sales-Data-Analysis)  "
-        "·  [LinkedIn](https://www.linkedin.com/in/aarush-nayak-8302ab220/)"
+# Premium project footer and portfolio links
+with st.container(border=True):
+    footer_left, footer_right = st.columns([2, 1])
+    with footer_left:
+        st.markdown("### 👨‍💻 Developed & Designed by Aarush Nayak")
+        st.caption("Python  ·  Data Analytics  ·  SQL  ·  Dashboard Development")
+    with footer_right:
+        st.markdown("**Connect with me**")
+        st.markdown(
+            "[🌐 GitHub Repository](https://github.com/aarushnayak/Sales-Data-Analysis)  "
+            "  [💼 LinkedIn](https://www.linkedin.com/in/aarush-nayak-8302ab220/)"
+        )
+    st.caption(
+        "Built with Python, Streamlit, pandas, and Plotly. "
+        "This portfolio project uses a sample dataset; results are illustrative."
     )
-
-st.caption(
-    "Built with Python, Streamlit, pandas, and Plotly · "
-    "Sample dataset: results are illustrative and depend on the supplied CSV."
-)
