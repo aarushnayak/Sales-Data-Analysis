@@ -65,7 +65,7 @@ if sales_df.empty:
     st.stop()
 
 # Source-level quality checks are independent of the selected filters.
-source_issues = sales_df[sales_df["Quality_Issue"] != ""].copy()
+source_issues = sales_df[sales_df["Quality_Issue"].str.startswith("⚠", na=False)].copy()
 if not source_issues.empty:
     st.warning(
         f"{len(source_issues)} source record(s) need data verification. "
@@ -169,8 +169,8 @@ if filtered.empty:
     st.info("No records match the selected filters. Change or clear a filter to continue.")
     st.stop()
 
-flagged_filtered = filtered[filtered["Quality_Issue"] != ""].copy()
-analysis_df = filtered if include_flagged else filtered[filtered["Quality_Issue"] == ""]
+flagged_filtered = filtered[filtered["Quality_Issue"].str.startswith("⚠", na=False)].copy()
+analysis_df = filtered if include_flagged else filtered[~filtered["Quality_Issue"].str.startswith("⚠", na=False)]
 
 st.caption(
     f"Analysis uses {len(analysis_df):,} record(s). "
