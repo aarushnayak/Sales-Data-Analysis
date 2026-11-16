@@ -1,71 +1,107 @@
-#📊 Sales Data Analysis...
+# 📊 Sales Data Analysis
 
-> A full-stack data analysis pipeline — SQL meets Python for deep business intelligence.
+[![Python CI](https://github.com/aarushnayak/Sales-Data-Analysis/actions/workflows/django.yml/badge.svg)](https://github.com/aarushnayak/Sales-Data-Analysis/actions/workflows/django.yml)
+![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
+![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-150458?logo=pandas)
+![SQLite](https://img.shields.io/badge/SQLite-SQLite%20Analytics-003B57?logo=sqlite)
+![Matplotlib](https://img.shields.io/badge/Matplotlib-Visualization-11557c)
 
-![Status](https://img.shields.io/badge/Status-Active-1d9e75?style=flat-square)
-![Python](https://img.shields.io/badge/Python-3.x-3572A5?style=flat-square&logo=python&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-Database-00758f?style=flat-square&logo=mysql&logoColor=white)
-![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-150458?style=flat-square&logo=pandas&logoColor=white)
-![Matplotlib](https://img.shields.io/badge/Matplotlib-Visualization-11557c?style=flat-square)
+A reproducible sales analytics project that uses **Python, pandas, SQLite SQL, and Matplotlib** to turn a CSV sales dataset into business KPIs, summary tables, and charts.
 
----
+## Project highlights
 
-## ✨ Features
+- Calculates total sales, total profit, order count, units sold, average order value, and profit margin.
+- Uses SQLite SQL queries to summarize sales and profit by region, product, and month.
+- Validates required columns, numeric values, and dates before analysis.
+- Exports summary CSV files, a text KPI report, and three charts.
+- Runs automatically with GitHub Actions on pushes and pull requests.
 
-| Feature | Description |
-|--------|-------------|
-| 📈 **Sales Analysis** | End-to-end sales pipeline using MySQL |
-| 📦 **Product Reports** | Per-product performance breakdown |
-| 🗺️ **Region Analysis** | Geographic sales distribution |
-| 💰 **Profit Analysis** | Margin & revenue breakdown |
-| 🥧 **Pie Chart Visualization** | Auto-generated charts using Matplotlib |
+## Tech stack
 
----
+| Tool | Purpose |
+| --- | --- |
+| Python 3.11 | Analysis pipeline |
+| pandas | Data loading and validation |
+| SQLite | SQL-based aggregations |
+| Matplotlib | Chart generation |
+| GitHub Actions | Automated checks |
 
-## 🛠️ Technologies Used
+## Repository structure
 
-- **MySQL** — Database & SQL queries
-- **Python** — Core analysis scripts
-- **Pandas** — Data manipulation & processing
-- **Matplotlib** — Chart & graph generation
-- **VS Code** — Development environment
-
----
-
-## 📁 Project Structure
-
+```text
+Sales-Data-Analysis/
+├── .github/workflows/   # CI workflow
+├── data/
+│   └── sales_data.csv   # Sample input dataset
+├── python/
+│   └── analysis.py      # Main analysis pipeline
+├── reports/             # Generated reports and charts
+├── sql/
+│   └── analysis_queries.sql
+├── tests/
+│   └── test_analysis.py
+├── .gitignore
+├── requirements.txt
+└── README.md
 ```
-sales-data-analysis/
-│
-├── data/           # CSV dataset
-├── python/         # analysis.py
-├── reports/        # Generated charts
-└── sql/            # SQL queries
-```
 
----
+## Getting started
 
-## 🚀 Getting Started
-
-### Prerequisites
+### 1. Clone the repository
 
 ```bash
-pip install pandas matplotlib mysql-connector-python
+git clone https://github.com/aarushnayak/Sales-Data-Analysis.git
+cd Sales-Data-Analysis
 ```
 
-### Run the Analysis
+### 2. Create and activate a virtual environment
+
+**macOS / Linux**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+**Windows PowerShell**
+```powershell
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+### 3. Install dependencies
 
 ```bash
-cd python
-python analysis.py
+python -m pip install -r requirements.txt
 ```
 
----
+### 4. Run the analysis
 
-## 👤 Author
+Run this command from the repository root:
 
-* Aarush Nayak
+```bash
+python python/analysis.py
+```
 
----
+Generated files are saved in `reports/`:
+- `summary.txt` — KPI summary
+- `region_summary.csv`, `product_summary.csv`, `monthly_summary.csv` — SQL result tables
+- `region_sales.png`, `product_sales.png`, `monthly_sales.png` — visualizations
 
-⭐ If you found this project useful, consider giving it a star on GitHub!
+### 5. Run tests
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+## Dataset
+
+The included CSV is a small sample dataset with order, date, customer, product, category, region, quantity, price, sales, and profit fields. Replace it with a larger, appropriately licensed dataset to explore more meaningful trends. The current sample covers only a short date range, so monthly trends are illustrative rather than statistically conclusive.
+
+## SQL analysis
+
+The SQL statements used by the Python pipeline are also documented in [sql/analysis_queries.sql](sql/analysis_queries.sql). The project uses SQLite locally, so no separate database server or credentials are required.
+
+## Author
+
+**Aarush Nayak**  
+[GitHub](https://github.com/aarushnayak) · [LinkedIn](https://www.linkedin.com/in/aarush-nayak-8302ab220/)
