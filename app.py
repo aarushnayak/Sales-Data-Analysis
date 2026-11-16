@@ -269,6 +269,19 @@ st.download_button(
     mime="text/csv",
 )
 
+st.divider()
+
+# Project ownership and portfolio links
+footer_left, footer_right = st.columns([2, 1])
+with footer_left:
+    st.markdown("### Developed & Designed by Aarush Nayak")
+    st.caption("Python • Data Analytics • SQL • Dashboard Development")
+with footer_right:
+    st.markdown(
+        "[GitHub Repository](https://github.com/aarushnayak/Sales-Data-Analysis)  "
+        "·  [LinkedIn](https://www.linkedin.com/in/aarush-nayak-8302ab220/)"
+    )
+
 st.caption(
     "Built with Python, Streamlit, pandas, and Plotly · "
     "Sample dataset: results are illustrative and depend on the supplied CSV."
