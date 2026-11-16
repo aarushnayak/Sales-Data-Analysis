@@ -87,7 +87,7 @@ if not source_issues.empty:
         issue_view["Profit minus Sales"] = issue_view["Profit"] - issue_view["Sales"]
         st.dataframe(
             issue_view,
-            width="stretch",
+            use_container_width=True,
             hide_index=True,
             column_config={
                 "Quality_Issue": st.column_config.TextColumn("Quality flag", width="medium"),
@@ -124,7 +124,7 @@ regions = sorted(sales_df["Region"].dropna().unique().tolist())
 # Initialise every region as selected, including North. The button restores all.
 if "selected_regions" not in st.session_state:
     st.session_state["selected_regions"] = regions
-if st.sidebar.button("Select all regions", width="stretch"):
+if st.sidebar.button("Select all regions", use_container_width=True):
     st.session_state["selected_regions"] = regions
 selected_regions = st.sidebar.multiselect(
     "Region",
@@ -218,7 +218,7 @@ else:
             title="Daily sales trend",
             labels={"Sales": "Sales (₹)", "Order_Date": "Order date"},
         )
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, use_container_width=True)
 
     with right:
         st.subheader("Sales by region")
@@ -277,7 +277,7 @@ display_columns = [
 ]
 st.dataframe(
     filtered[display_columns].sort_values("Date", ascending=False),
-    width="stretch",
+    use_container_width=True,
     hide_index=True,
     column_config={
         "Quality_Issue": st.column_config.TextColumn(
