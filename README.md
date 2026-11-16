@@ -12,10 +12,12 @@ A reproducible sales analytics project using **Python, pandas, SQLite SQL, Matpl
 ## ✨ Features
 
 - Interactive dashboard with date, region, category, and product filters.
-- KPI cards for total sales, total profit, orders, units sold, and profit margin.
-- Interactive monthly, regional, product, and category charts.
-- Download filtered records as CSV.
-- Data-quality panel flags suspicious rows for review without silently changing source data.
+- All regions are selected by default, with a **Select all regions** reset button.
+- KPI cards for total sales, total profit, orders, units sold, average order value, and profit margin.
+- Daily sales trend for the included one-month sample, plus regional, product, and category charts.
+- Download filtered records and flagged quality-review records as CSV.
+- Flags suspicious source values (such as profit exceeding sales) for manual review.
+- Flagged records are excluded from KPIs and charts by default, but remain visible in the source table. Users can opt to include them.
 - Python analysis pipeline exports summary CSVs, KPI text, and static charts.
 - Unit tests and GitHub Actions CI on pushes and pull requests.
 
@@ -108,7 +110,7 @@ Sales-Data-Analysis/
 
 ## Dataset and data quality
 
-The included CSV is a small sample dataset with order, date, customer, product, category, region, quantity, price, sales, and profit fields. The dashboard flags records where profit exceeds sales for manual verification; it does not automatically rewrite the source CSV. Replace the sample with a larger, appropriately licensed dataset before drawing business conclusions. The current sample covers a short date range, so trends are illustrative rather than statistically conclusive.
+The included CSV is a small sample dataset with order, date, customer, product, category, region, quantity, price, sales, and profit fields. Profit values greater than sales are flagged for verification, not silently corrected. Flagged rows are excluded from KPI and chart calculations by default to avoid overstating reported profitability; the dashboard lets users opt in to include them and download the flagged rows for review. The source CSV remains unchanged until the original record is verified. The sample spans only January 2025, so the dashboard displays a daily sales trend; results are illustrative rather than statistically conclusive.
 
 ## Author
 
