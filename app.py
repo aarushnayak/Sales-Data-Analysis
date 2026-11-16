@@ -23,7 +23,7 @@ REQUIRED_COLUMNS = [
 
 @st.cache_data
 def load_sales_data(path: Path) -> pd.DataFrame:
-    """Read and validate the project CSV."""
+    """Read, validate, and annotate the project CSV without changing its source."""
     data = pd.read_csv(path)
     missing = [column for column in REQUIRED_COLUMNS if column not in data.columns]
     if missing:
@@ -33,7 +33,15 @@ def load_sales_data(path: Path) -> pd.DataFrame:
         data[column] = pd.to_numeric(data[column], errors="coerce")
 
     data["Date"] = pd.to_datetime(data["Date"], errors="coerce")
-    data = data.dropna(subset=["Date", "Sales", "Profit", "Quantity"])
+    data = data.dropna(subset=["Date", "Sales", "Profit", "Quantity"]).copy()
+
+    # Flag suspicious values for review. Never rewrite source records automatically.
+    data["Quality_Issue"] = ""
+    data.loc[data["Profit"] > data["Sales"], "Quality_Issue"] = (
+        "Reported profit exceeds reported sales — verify source record"
+    )
+    data.loc[data["Sales"] < 0, "Quality_Issue"] = "Negative sales value — verify source record"
+    data.loc[data["Profit"] < 0, "Quality_Issue"] = "Negative profit value — verify source record"
     return data
 
 
@@ -43,7 +51,10 @@ def format_inr(value: float) -> str:
 
 
 st.title("📊 Sales Analytics Dashboard")
-st.caption("Explore sales, profit, products, and regional performance from the project dataset.")
+st.caption(
+    "Explore sales, profit, products, and regional performance. "
+    "Use the sidebar to filter the records."
+)
 
 try:
     sales_df = load_sales_data(DATA_FILE)
@@ -54,6 +65,31 @@ except (FileNotFoundError, pd.errors.ParserError, ValueError) as error:
 if sales_df.empty:
     st.warning("No valid sales records are available to display.")
     st.stop()
+
+# Source-level quality checks are independent of the selected filters.
+source_issues = sales_df[sales_df["Quality_Issue"] != ""].copy()
+if not source_issues.empty:
+    st.warning(
+        f"{len(source_issues)} source record(s) need data verification. "
+        "Flagged records are excluded from KPIs and charts by default; "
+        "the original CSV is not modified."
+    )
+    with st.expander("Review source data-quality warnings", expanded=True):
+        issue_columns = [
+            "Order_ID", "Date", "Product", "Region", "Sales", "Profit", "Quality_Issue"
+        ]
+        issue_view = source_issues[issue_columns].copy()
+        issue_view["Profit minus Sales"] = issue_view["Profit"] - issue_view["Sales"]
+        st.dataframe(issue_view, use_container_width=True, hide_index=True)
+        st.download_button(
+            "⬇️ Download flagged records",
+            data=issue_view.to_csv(index=False).encode("utf-8"),
+            file_name="sales_data_quality_review.csv",
+            mime="text/csv",
+            key="download_quality_issues",
+        )
+else:
+    st.success("No obvious sales/profit anomalies were detected in the source dataset.")
 
 # Sidebar filters
 st.sidebar.header("Filter data")
@@ -67,148 +103,171 @@ date_range = st.sidebar.date_input(
 )
 
 regions = sorted(sales_df["Region"].dropna().unique().tolist())
-selected_regions = st.sidebar.multiselect("Region", regions, default=regions)
+# Initialise every region as selected, including North. The button restores all.
+if "selected_regions" not in st.session_state:
+    st.session_state["selected_regions"] = regions
+if st.sidebar.button("Select all regions", use_container_width=True):
+    st.session_state["selected_regions"] = regions
+selected_regions = st.sidebar.multiselect(
+    "Region",
+    options=regions,
+    key="selected_regions",
+    help="All regions are selected by default. Use Select all regions to reset.",
+)
 
 categories = sorted(sales_df["Category"].dropna().unique().tolist())
 selected_categories = st.sidebar.multiselect(
-    "Category", categories, default=categories
+    "Category", categories, default=categories, key="selected_categories"
 )
 
 products = sorted(sales_df["Product"].dropna().unique().tolist())
 selected_products = st.sidebar.multiselect(
-    "Product", products, default=products
+    "Product", products, default=products, key="selected_products"
+)
+
+include_flagged = st.sidebar.checkbox(
+    "Include flagged records in KPIs and charts",
+    value=False,
+    help=(
+        "Off by default so suspicious source values do not distort reported KPIs. "
+        "Turn this on to reconcile the figures against the unfiltered source."
+    ),
 )
 
 filtered = sales_df.copy()
-if isinstance(date_range, tuple) and len(date_range) == 2:
+if isinstance(date_range, (tuple, list)) and len(date_range) == 2:
     start_date, end_date = date_range
-    filtered = filtered[
-        filtered["Date"].dt.date.between(start_date, end_date)
-    ]
+    filtered = filtered[filtered["Date"].dt.date.between(start_date, end_date)]
 
 filtered = filtered[
     filtered["Region"].isin(selected_regions)
     & filtered["Category"].isin(selected_categories)
     & filtered["Product"].isin(selected_products)
-]
+].copy()
 
-st.sidebar.caption(f"Showing {len(filtered):,} of {len(sales_df):,} records.")
+st.sidebar.caption(f"Showing {len(filtered):,} of {len(sales_df):,} matching records.")
 
 if filtered.empty:
     st.info("No records match the selected filters. Change or clear a filter to continue.")
     st.stop()
 
-# KPI cards
-total_sales = filtered["Sales"].sum()
-total_profit = filtered["Profit"].sum()
-order_count = filtered["Order_ID"].nunique()
-units_sold = filtered["Quantity"].sum()
-average_order_value = total_sales / order_count if order_count else 0
-profit_margin = total_profit / total_sales * 100 if total_sales else 0
+flagged_filtered = filtered[filtered["Quality_Issue"] != ""].copy()
+analysis_df = filtered if include_flagged else filtered[filtered["Quality_Issue"] == ""]
 
-kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
-kpi1.metric("Total Sales", format_inr(total_sales))
-kpi2.metric("Total Profit", format_inr(total_profit))
-kpi3.metric("Orders", f"{order_count:,}")
-kpi4.metric("Units Sold", f"{units_sold:,.0f}")
-kpi5.metric("Profit Margin", f"{profit_margin:.1f}%")
+st.caption(
+    f"Analysis uses {len(analysis_df):,} record(s). "
+    f"{len(flagged_filtered):,} flagged record(s) "
+    f"{'included by choice' if include_flagged else 'excluded from KPIs/charts'}."
+)
 
-st.divider()
+if analysis_df.empty:
+    st.warning(
+        "All records matching the current filters are flagged. "
+        "Enable 'Include flagged records' or change the filters to view KPIs and charts."
+    )
+else:
+    # KPI cards
+    total_sales = analysis_df["Sales"].sum()
+    total_profit = analysis_df["Profit"].sum()
+    order_count = analysis_df["Order_ID"].nunique()
+    units_sold = analysis_df["Quantity"].sum()
+    average_order_value = total_sales / order_count if order_count else 0
+    profit_margin = total_profit / total_sales * 100 if total_sales else 0
 
-# Trends and regional performance
-left, right = st.columns(2)
-with left:
-    st.subheader("Sales over time")
-    monthly = (
-        filtered.assign(Month=filtered["Date"].dt.to_period("M").astype(str))
-        .groupby("Month", as_index=False)["Sales"]
-        .sum()
-    )
-    fig = px.line(
-        monthly, x="Month", y="Sales", markers=True,
-        title="Monthly sales trend",
-        labels={"Sales": "Sales (₹)", "Month": "Month"},
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
+    kpi1.metric("Total Sales", format_inr(total_sales))
+    kpi2.metric("Total Profit", format_inr(total_profit))
+    kpi3.metric("Orders", f"{order_count:,}")
+    kpi4.metric("Units Sold", f"{units_sold:,.0f}")
+    kpi5.metric("Profit Margin", f"{profit_margin:.1f}%")
 
-with right:
-    st.subheader("Sales by region")
-    region_sales = (
-        filtered.groupby("Region", as_index=False)["Sales"]
-        .sum()
-        .sort_values("Sales", ascending=False)
-    )
-    fig = px.bar(
-        region_sales, x="Region", y="Sales", color="Region",
-        title="Regional sales comparison",
-        labels={"Sales": "Sales (₹)"},
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    st.divider()
 
-# Product and category performance
-left, right = st.columns(2)
-with left:
-    st.subheader("Top products")
-    product_sales = (
-        filtered.groupby("Product", as_index=False)["Sales"]
-        .sum()
-        .sort_values("Sales", ascending=True)
-        .tail(10)
-    )
-    fig = px.bar(
-        product_sales, x="Sales", y="Product", orientation="h",
-        title="Top 10 products by sales",
-        labels={"Sales": "Sales (₹)"},
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    # The sample dataset covers one month, so daily aggregation is more informative.
+    left, right = st.columns(2)
+    with left:
+        st.subheader("Sales over time")
+        daily = (
+            analysis_df.assign(Order_Date=analysis_df["Date"].dt.date)
+            .groupby("Order_Date", as_index=False)["Sales"]
+            .sum()
+        )
+        fig = px.line(
+            daily,
+            x="Order_Date",
+            y="Sales",
+            markers=True,
+            title="Daily sales trend",
+            labels={"Sales": "Sales (₹)", "Order_Date": "Order date"},
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
-with right:
-    st.subheader("Category contribution")
-    category_sales = filtered.groupby("Category", as_index=False)["Sales"].sum()
-    fig = px.pie(
-        category_sales, names="Category", values="Sales",
-        hole=0.45, title="Sales share by category",
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    with right:
+        st.subheader("Sales by region")
+        region_sales = (
+            analysis_df.groupby("Region", as_index=False)["Sales"]
+            .sum()
+            .sort_values("Sales", ascending=False)
+        )
+        fig = px.bar(
+            region_sales,
+            x="Region",
+            y="Sales",
+            color="Region",
+            title="Regional sales comparison",
+            labels={"Sales": "Sales (₹)"},
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
-# Data table and quality checks
+    # Product and category performance
+    left, right = st.columns(2)
+    with left:
+        st.subheader("Top products")
+        product_sales = (
+            analysis_df.groupby("Product", as_index=False)["Sales"]
+            .sum()
+            .sort_values("Sales", ascending=True)
+            .tail(10)
+        )
+        fig = px.bar(
+            product_sales,
+            x="Sales",
+            y="Product",
+            orientation="h",
+            title="Top 10 products by sales",
+            labels={"Sales": "Sales (₹)"},
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+    with right:
+        st.subheader("Category contribution")
+        category_sales = analysis_df.groupby("Category", as_index=False)["Sales"].sum()
+        fig = px.pie(
+            category_sales,
+            names="Category",
+            values="Sales",
+            hole=0.45,
+            title="Sales share by category",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+# Show all filtered source rows, including flagged ones, so the user can reconcile.
 st.subheader("Filtered order details")
 display_columns = [
     "Order_ID", "Date", "Customer", "Product", "Category",
-    "Region", "Quantity", "Sales", "Profit",
+    "Region", "Quantity", "Sales", "Profit", "Quality_Issue",
 ]
 st.dataframe(
     filtered[display_columns].sort_values("Date", ascending=False),
     use_container_width=True,
     hide_index=True,
 )
-
 st.download_button(
     "⬇️ Download filtered data (CSV)",
     data=filtered[display_columns].to_csv(index=False).encode("utf-8"),
     file_name="sales_data_filtered.csv",
     mime="text/csv",
 )
-
-# Flag suspicious records without silently changing source data.
-quality_issues = filtered[
-    (filtered["Profit"] > filtered["Sales"])
-    | (filtered["Sales"] < 0)
-    | (filtered["Profit"] < 0)
-]
-with st.expander(f"Data quality checks ({len(quality_issues)} flagged rows)"):
-    if quality_issues.empty:
-        st.success("No obvious sales/profit anomalies found in the filtered records.")
-    else:
-        st.warning(
-            "These rows need source-data verification. The dashboard does not "
-            "automatically modify or remove them."
-        )
-        st.dataframe(
-            quality_issues[display_columns],
-            use_container_width=True,
-            hide_index=True,
-        )
 
 st.caption(
     "Built with Python, Streamlit, pandas, and Plotly · "
