@@ -2,50 +2,24 @@
 
 [![Python CI](https://github.com/aarushnayak/Sales-Data-Analysis/actions/workflows/django.yml/badge.svg)](https://github.com/aarushnayak/Sales-Data-Analysis/actions/workflows/django.yml)
 ![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
+![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B?logo=streamlit)
 ![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-150458?logo=pandas)
-![SQLite](https://img.shields.io/badge/SQLite-SQLite%20Analytics-003B57?logo=sqlite)
-![Matplotlib](https://img.shields.io/badge/Matplotlib-Visualization-11557c)
+![SQLite](https://img.shields.io/badge/SQLite-SQL%20Analytics-003B57?logo=sqlite)
+![Plotly](https://img.shields.io/badge/Plotly-Interactive%20Charts-3F4F75?logo=plotly)
 
-A reproducible sales analytics project that uses **Python, pandas, SQLite SQL, and Matplotlib** to turn a CSV sales dataset into business KPIs, summary tables, and charts.
+A reproducible sales analytics project using **Python, pandas, SQLite SQL, Matplotlib, Streamlit, and Plotly**. It transforms a CSV sales dataset into business KPIs, SQL summaries, charts, and an interactive dashboard.
 
-## Project highlights
+## ✨ Features
 
-- Calculates total sales, total profit, order count, units sold, average order value, and profit margin.
-- Uses SQLite SQL queries to summarize sales and profit by region, product, and month.
-- Validates required columns, numeric values, and dates before analysis.
-- Exports summary CSV files, a text KPI report, and three charts.
-- Runs automatically with GitHub Actions on pushes and pull requests.
+- Interactive dashboard with date, region, category, and product filters.
+- KPI cards for total sales, total profit, orders, units sold, and profit margin.
+- Interactive monthly, regional, product, and category charts.
+- Download filtered records as CSV.
+- Data-quality panel flags suspicious rows for review without silently changing source data.
+- Python analysis pipeline exports summary CSVs, KPI text, and static charts.
+- Unit tests and GitHub Actions CI on pushes and pull requests.
 
-## Tech stack
-
-| Tool | Purpose |
-| --- | --- |
-| Python 3.11 | Analysis pipeline |
-| pandas | Data loading and validation |
-| SQLite | SQL-based aggregations |
-| Matplotlib | Chart generation |
-| GitHub Actions | Automated checks |
-
-## Repository structure
-
-```text
-Sales-Data-Analysis/
-├── .github/workflows/   # CI workflow
-├── data/
-│   └── sales_data.csv   # Sample input dataset
-├── python/
-│   └── analysis.py      # Main analysis pipeline
-├── reports/             # Generated reports and charts
-├── sql/
-│   └── analysis_queries.sql
-├── tests/
-│   └── test_analysis.py
-├── .gitignore
-├── requirements.txt
-└── README.md
-```
-
-## Getting started
+## 🖥️ Run the interactive dashboard
 
 ### 1. Clone the repository
 
@@ -74,9 +48,17 @@ py -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-### 4. Run the analysis
+### 4. Launch Streamlit
 
-Run this command from the repository root:
+Run from the repository root:
+
+```bash
+streamlit run app.py
+```
+
+Streamlit will print a local URL (usually http://localhost:8501) to open in your browser.
+
+## 🧮 Run the Python analytics pipeline
 
 ```bash
 python python/analysis.py
@@ -87,19 +69,46 @@ Generated files are saved in `reports/`:
 - `region_summary.csv`, `product_summary.csv`, `monthly_summary.csv` — SQL result tables
 - `region_sales.png`, `product_sales.png`, `monthly_sales.png` — visualizations
 
-### 5. Run tests
+## 🧪 Run tests
 
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-## Dataset
+## 🛠️ Tech stack
 
-The included CSV is a small sample dataset with order, date, customer, product, category, region, quantity, price, sales, and profit fields. Replace it with a larger, appropriately licensed dataset to explore more meaningful trends. The current sample covers only a short date range, so monthly trends are illustrative rather than statistically conclusive.
+| Tool | Purpose |
+| --- | --- |
+| Python 3.11 | Application and analysis logic |
+| Streamlit | Interactive dashboard |
+| pandas | Data loading, filtering, and validation |
+| SQLite | SQL-based aggregations |
+| Plotly | Interactive dashboard charts |
+| Matplotlib | Exportable report charts |
+| GitHub Actions | Automated tests and CI |
 
-## SQL analysis
+## 📁 Repository structure
 
-The SQL statements used by the Python pipeline are also documented in [sql/analysis_queries.sql](sql/analysis_queries.sql). The project uses SQLite locally, so no separate database server or credentials are required.
+```text
+Sales-Data-Analysis/
+├── .github/workflows/   # CI workflow
+├── app.py               # Streamlit dashboard
+├── data/
+│   └── sales_data.csv   # Sample input dataset
+├── python/
+│   └── analysis.py      # Analytics pipeline
+├── reports/             # Generated reports and charts
+├── sql/
+│   └── analysis_queries.sql
+├── tests/
+│   └── test_analysis.py
+├── requirements.txt
+└── README.md
+```
+
+## Dataset and data quality
+
+The included CSV is a small sample dataset with order, date, customer, product, category, region, quantity, price, sales, and profit fields. The dashboard flags records where profit exceeds sales for manual verification; it does not automatically rewrite the source CSV. Replace the sample with a larger, appropriately licensed dataset before drawing business conclusions. The current sample covers a short date range, so trends are illustrative rather than statistically conclusive.
 
 ## Author
 
