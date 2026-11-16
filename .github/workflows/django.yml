@@ -6,28 +6,32 @@ on:
   pull_request:
     branches: ["main"]
 
+permissions:
+  contents: read
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pandas matplotlib
+          python -m pip install -r requirements.txt
 
-      - name: Run analysis
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Run sales analysis
         env:
           MPLBACKEND: Agg
-        run: |
-          mkdir -p reports
-          python -m py_compile python/analysis.py
-          python python/analysis.py
+        run: python python/analysis.py
