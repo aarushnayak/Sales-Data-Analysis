@@ -1,12 +1,16 @@
 """Interactive Streamlit dashboard for the Sales Data Analysis project."""
 
 from pathlib import Path
+import sys
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
 ROOT_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT_DIR / "python"))
+from data_quality import add_quality_flags
+
 DATA_FILE = ROOT_DIR / "data" / "sales_data.csv"
 
 st.set_page_config(
@@ -35,11 +39,8 @@ def load_sales_data(path: Path) -> pd.DataFrame:
     data["Date"] = pd.to_datetime(data["Date"], errors="coerce")
     data = data.dropna(subset=["Date", "Sales", "Profit", "Quantity"]).copy()
 
-    # Short, readable labels for tables. Full explanations appear in the review panel.
-    data["Quality_Issue"] = "✅ OK"
-    data.loc[data["Profit"] > data["Sales"], "Quality_Issue"] = "⚠ Profit > Sales"
-    data.loc[data["Sales"] < 0, "Quality_Issue"] = "⚠ Negative sales"
-    data.loc[data["Profit"] < 0, "Quality_Issue"] = "⚠ Negative profit"
+    # Reusable rule-based checks flag suspicious records without changing source values.
+    data = add_quality_flags(data)
     return data
 
 
