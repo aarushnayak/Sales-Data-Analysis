@@ -115,7 +115,8 @@ Sales-Data-Analysis/
 ├── data/
 │   └── sales_data.csv       # Sample sales dataset
 ├── python/
-│   └── analysis.py          # Python and SQLite analysis pipeline
+│   ├── analysis.py          # Python and SQLite analysis pipeline
+│   └── data_quality.py      # Reusable data-quality validation rules
 ├── reports/                 # Generated summaries and charts
 ├── sql/
 │   └── analysis_queries.sql # Documented SQL queries
