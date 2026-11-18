@@ -8,9 +8,50 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR / "python"))
 
 from analysis import calculate_metrics, validate_dataset
+from data_quality import (
+    NEGATIVE_PROFIT,
+    NEGATIVE_SALES,
+    PROFIT_EXCEEDS_SALES,
+    QUALITY_OK,
+    add_quality_flags,
+)
 
 
 class SalesAnalysisTests(unittest.TestCase):
+    def test_quality_flags_suspicious_profit_without_mutating_source(self):
+        source = pd.DataFrame(
+            [
+                {"Sales": 45000, "Profit": 100000},
+                {"Sales": 10000, "Profit": 2500},
+            ]
+        )
+
+        result = add_quality_flags(source)
+
+        self.assertEqual(result["Quality_Issue"].tolist(), [
+            PROFIT_EXCEEDS_SALES, QUALITY_OK
+        ])
+        self.assertNotIn("Quality_Issue", source.columns)
+        self.assertEqual(source.loc[0, "Profit"], 100000)
+
+    def test_quality_flags_negative_sales_and_profit(self):
+        source = pd.DataFrame(
+            [
+                {"Sales": -100, "Profit": 10},
+                {"Sales": 100, "Profit": -10},
+            ]
+        )
+
+        result = add_quality_flags(source)
+
+        self.assertEqual(result["Quality_Issue"].tolist(), [
+            NEGATIVE_SALES, NEGATIVE_PROFIT
+        ])
+
+    def test_quality_flags_requires_sales_and_profit(self):
+        with self.assertRaisesRegex(ValueError, "Missing required columns"):
+            add_quality_flags(pd.DataFrame({"Sales": [100]}))
+
     def sample_data(self):
         return pd.DataFrame(
             [
