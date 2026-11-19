@@ -23,10 +23,19 @@ def add_quality_flags(data: pd.DataFrame) -> pd.DataFrame:
         )
 
     result = data.copy()
-    result["Quality_Issue"] = QUALITY_OK
-    result.loc[result["Profit"] > result["Sales"], "Quality_Issue"] = (
-        PROFIT_EXCEEDS_SALES
+    # Keep every matching rule so one anomaly cannot hide another.
+    row_issues = [[] for _ in range(len(result))]
+    checks = (
+        (result["Profit"] > result["Sales"], PROFIT_EXCEEDS_SALES),
+        (result["Sales"] < 0, NEGATIVE_SALES),
+        (result["Profit"] < 0, NEGATIVE_PROFIT),
     )
-    result.loc[result["Sales"] < 0, "Quality_Issue"] = NEGATIVE_SALES
-    result.loc[result["Profit"] < 0, "Quality_Issue"] = NEGATIVE_PROFIT
+    for mask, label in checks:
+        for position, matches in enumerate(mask.fillna(False).to_numpy()):
+            if matches:
+                row_issues[position].append(label)
+
+    result["Quality_Issue"] = [
+        "; ".join(issues) if issues else QUALITY_OK for issues in row_issues
+    ]
     return result

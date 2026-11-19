@@ -78,12 +78,16 @@ if not source_issues.empty:
             "Order_ID", "Date", "Product", "Region", "Sales", "Profit", "Quality_Issue"
         ]
         issue_view = source_issues[issue_columns].copy()
+        issue_descriptions = {
+            "⚠ Profit > Sales": "Reported profit is greater than sales. Verify the original record.",
+            "⚠ Negative sales": "Sales is negative. Verify the source transaction.",
+            "⚠ Negative profit": "Profit is negative. Verify the source transaction.",
+        }
         issue_view["Why flagged"] = issue_view["Quality_Issue"].map(
-            {
-                "⚠ Profit > Sales": "Reported profit is greater than sales. Verify the original record.",
-                "⚠ Negative sales": "Sales is negative. Verify the source transaction.",
-                "⚠ Negative profit": "Profit is negative. Verify the source transaction.",
-            }
+            lambda issues: "; ".join(
+                issue_descriptions.get(issue, "Review this record.")
+                for issue in issues.split("; ")
+            )
         )
         issue_view["Profit minus Sales"] = issue_view["Profit"] - issue_view["Sales"]
         st.dataframe(

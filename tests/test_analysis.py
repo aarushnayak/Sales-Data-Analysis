@@ -48,6 +48,23 @@ class SalesAnalysisTests(unittest.TestCase):
             NEGATIVE_SALES, NEGATIVE_PROFIT
         ])
 
+    def test_quality_flags_keep_all_matching_issues(self):
+        source = pd.DataFrame(
+            [
+                {"Sales": -100, "Profit": 10},
+                {"Sales": -100, "Profit": -10},
+                {"Sales": 100, "Profit": -10},
+            ]
+        )
+
+        result = add_quality_flags(source)
+
+        self.assertEqual(result["Quality_Issue"].tolist(), [
+            f"{PROFIT_EXCEEDS_SALES}; {NEGATIVE_SALES}",
+            f"{PROFIT_EXCEEDS_SALES}; {NEGATIVE_SALES}; {NEGATIVE_PROFIT}",
+            NEGATIVE_PROFIT,
+        ])
+
     def test_quality_flags_requires_sales_and_profit(self):
         with self.assertRaisesRegex(ValueError, "Missing required columns"):
             add_quality_flags(pd.DataFrame({"Sales": [100]}))
