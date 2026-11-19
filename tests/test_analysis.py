@@ -45,7 +45,8 @@ class SalesAnalysisTests(unittest.TestCase):
         result = add_quality_flags(source)
 
         self.assertEqual(result["Quality_Issue"].tolist(), [
-            NEGATIVE_SALES, NEGATIVE_PROFIT
+            f"{PROFIT_EXCEEDS_SALES}; {NEGATIVE_SALES}",
+            NEGATIVE_PROFIT,
         ])
 
     def test_quality_flags_keep_all_matching_issues(self):
