@@ -109,11 +109,10 @@ class SalesAnalysisTests(unittest.TestCase):
         source.loc[0, "Sales"] = None
         source.loc[1, "Date"] = None
 
-        with self.assertRaisesRegex(
-            ValueError,
-            r"Missing values in required columns: Date \\(1\\), Sales \\(1\\)",
-        ):
+        with self.assertRaises(ValueError) as context:
             validate_dataset(source)
+
+        self.assertIn("Missing values in required columns: Date (1), Sales (1)", str(context.exception))
 
     def test_validation_rejects_empty_data(self):
         with self.assertRaisesRegex(ValueError, "empty"):
