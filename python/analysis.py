@@ -33,6 +33,17 @@ def validate_dataset(data: pd.DataFrame) -> pd.DataFrame:
         data[column] = pd.to_numeric(data[column], errors="raise")
 
     data["Date"] = pd.to_datetime(data["Date"], errors="raise")
+
+    # pandas numeric/date conversions can retain missing values as NaN/NaT.
+    # Reject them explicitly so downstream sums do not silently undercount rows.
+    missing_values = data[sorted(REQUIRED_COLUMNS)].isna().sum()
+    missing_values = missing_values[missing_values > 0]
+    if not missing_values.empty:
+        details = ", ".join(
+            f"{column} ({count})" for column, count in missing_values.items()
+        )
+        raise ValueError(f"Missing values in required columns: {details}")
+
     return data
 
 

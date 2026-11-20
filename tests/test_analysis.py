@@ -104,6 +104,17 @@ class SalesAnalysisTests(unittest.TestCase):
         self.assertEqual(result["average_order_value"], 25.0)
         self.assertEqual(result["profit_margin_pct"], 30.0)
 
+    def test_validation_rejects_missing_required_values(self):
+        source = self.sample_data()
+        source.loc[0, "Sales"] = None
+        source.loc[1, "Date"] = None
+
+        with self.assertRaisesRegex(
+            ValueError,
+            r"Missing values in required columns: Date \\(1\\), Sales \\(1\\)",
+        ):
+            validate_dataset(source)
+
     def test_validation_rejects_empty_data(self):
         with self.assertRaisesRegex(ValueError, "empty"):
             validate_dataset(self.sample_data().iloc[0:0])
