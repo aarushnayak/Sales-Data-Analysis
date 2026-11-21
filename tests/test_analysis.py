@@ -116,6 +116,8 @@ class SalesAnalysisTests(unittest.TestCase):
 
     def test_validation_rejects_infinite_numeric_values(self):
         source = self.sample_data()
+        source["Sales"] = source["Sales"].astype(float)
+        source["Price"] = source["Price"].astype(float)
         source.loc[0, "Sales"] = float("inf")
         source.loc[1, "Price"] = float("-inf")
 
