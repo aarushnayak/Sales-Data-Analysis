@@ -44,6 +44,17 @@ def validate_dataset(data: pd.DataFrame) -> pd.DataFrame:
         )
         raise ValueError(f"Missing values in required columns: {details}")
 
+    # Infinite values are numeric but cannot produce meaningful sales KPIs.
+    non_finite_values = data[NUMERIC_COLUMNS].isin(
+        [float("inf"), float("-inf")]
+    ).sum()
+    non_finite_values = non_finite_values[non_finite_values > 0]
+    if not non_finite_values.empty:
+        details = ", ".join(
+            f"{column} ({count})" for column, count in non_finite_values.items()
+        )
+        raise ValueError(f"Non-finite numeric values in required columns: {details}")
+
     return data
 
 
