@@ -114,6 +114,19 @@ class SalesAnalysisTests(unittest.TestCase):
 
         self.assertIn("Missing values in required columns: Date (1), Sales (1)", str(context.exception))
 
+    def test_validation_rejects_infinite_numeric_values(self):
+        source = self.sample_data()
+        source.loc[0, "Sales"] = float("inf")
+        source.loc[1, "Price"] = float("-inf")
+
+        with self.assertRaises(ValueError) as context:
+            validate_dataset(source)
+
+        self.assertIn(
+            "Non-finite numeric values in required columns: Price (1), Sales (1)",
+            str(context.exception),
+        )
+
     def test_validation_rejects_empty_data(self):
         with self.assertRaisesRegex(ValueError, "empty"):
             validate_dataset(self.sample_data().iloc[0:0])
