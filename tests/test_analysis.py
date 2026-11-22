@@ -9,6 +9,10 @@ sys.path.insert(0, str(ROOT_DIR / "python"))
 
 from analysis import calculate_metrics, validate_dataset
 from data_quality import (
+    INVALID_PRICE,
+    INVALID_PROFIT,
+    INVALID_QUANTITY,
+    INVALID_SALES,
     NEGATIVE_PROFIT,
     NEGATIVE_SALES,
     PROFIT_EXCEEDS_SALES,
@@ -64,6 +68,25 @@ class SalesAnalysisTests(unittest.TestCase):
             f"{PROFIT_EXCEEDS_SALES}; {NEGATIVE_SALES}",
             f"{PROFIT_EXCEEDS_SALES}; {NEGATIVE_SALES}; {NEGATIVE_PROFIT}",
             NEGATIVE_PROFIT,
+        ])
+
+    def test_quality_flags_missing_and_non_finite_numeric_inputs(self):
+        source = pd.DataFrame(
+            {
+                "Quantity": [None, 2, 3, 4],
+                "Price": [10, None, 20, 30],
+                "Sales": [100, 100, float("inf"), 100],
+                "Profit": [10, 10, 10, float("-inf")],
+            }
+        )
+
+        result = add_quality_flags(source)
+
+        self.assertEqual(result["Quality_Issue"].tolist(), [
+            INVALID_QUANTITY,
+            INVALID_PRICE,
+            INVALID_SALES,
+            INVALID_PROFIT,
         ])
 
     def test_quality_flags_requires_sales_and_profit(self):

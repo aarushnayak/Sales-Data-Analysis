@@ -37,7 +37,9 @@ def load_sales_data(path: Path) -> pd.DataFrame:
         data[column] = pd.to_numeric(data[column], errors="coerce")
 
     data["Date"] = pd.to_datetime(data["Date"], errors="coerce")
-    data = data.dropna(subset=["Date", "Sales", "Profit", "Quantity"]).copy()
+    # Keep rows with invalid Quantity so the quality review can show them.
+    # Date, Sales, and Profit are required for the dashboard's filters and KPIs.
+    data = data.dropna(subset=["Date", "Sales", "Profit"]).copy()
 
     # Reusable rule-based checks flag suspicious records without changing source values.
     data = add_quality_flags(data)
@@ -75,13 +77,18 @@ if not source_issues.empty:
     )
     with st.expander("Review source data-quality warnings", expanded=True):
         issue_columns = [
-            "Order_ID", "Date", "Product", "Region", "Sales", "Profit", "Quality_Issue"
+            "Order_ID", "Date", "Product", "Region", "Quantity", "Price",
+            "Sales", "Profit", "Quality_Issue"
         ]
         issue_view = source_issues[issue_columns].copy()
         issue_descriptions = {
             "⚠ Profit > Sales": "Reported profit is greater than sales. Verify the original record.",
             "⚠ Negative sales": "Sales is negative. Verify the source transaction.",
             "⚠ Negative profit": "Profit is negative. Verify the source transaction.",
+            "⚠ Invalid quantity": "Quantity is missing or non-finite. Verify the source record.",
+            "⚠ Invalid price": "Price is missing or non-finite. Verify the source record.",
+            "⚠ Invalid sales": "Sales is non-finite. Verify the source record.",
+            "⚠ Invalid profit": "Profit is non-finite. Verify the source record.",
         }
         issue_view["Why flagged"] = issue_view["Quality_Issue"].map(
             lambda issues: "; ".join(
@@ -100,6 +107,8 @@ if not source_issues.empty:
                 "Profit minus Sales": st.column_config.NumberColumn(
                     "Profit − Sales", format="₹ %.0f", width="medium"
                 ),
+                "Quantity": st.column_config.NumberColumn("Quantity", format="%.2f"),
+                "Price": st.column_config.NumberColumn("Price", format="₹ %.0f"),
                 "Sales": st.column_config.NumberColumn("Sales", format="₹ %.0f"),
                 "Profit": st.column_config.NumberColumn("Profit", format="₹ %.0f"),
             },
@@ -112,7 +121,7 @@ if not source_issues.empty:
             key="download_quality_issues",
         )
 else:
-    st.success("No obvious sales/profit anomalies were detected in the source dataset.")
+    st.success("No obvious data-quality anomalies were detected in the source dataset.")
 
 # Sidebar filters
 st.sidebar.header("Filter data")
@@ -278,7 +287,7 @@ else:
 st.subheader("Filtered order details")
 display_columns = [
     "Order_ID", "Date", "Customer", "Product", "Category",
-    "Region", "Quantity", "Sales", "Profit", "Quality_Issue",
+    "Region", "Quantity", "Price", "Sales", "Profit", "Quality_Issue",
 ]
 st.dataframe(
     filtered[display_columns].sort_values("Date", ascending=False),
@@ -290,6 +299,7 @@ st.dataframe(
             help="⚠ marks a record that needs review; ✅ OK means no basic rule was triggered.",
             width="medium",
         ),
+        "Price": st.column_config.NumberColumn("Price", format="₹ %.0f"),
         "Sales": st.column_config.NumberColumn("Sales", format="₹ %.0f"),
         "Profit": st.column_config.NumberColumn("Profit", format="₹ %.0f"),
     },
