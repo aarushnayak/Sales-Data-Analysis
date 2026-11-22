@@ -37,9 +37,9 @@ def load_sales_data(path: Path) -> pd.DataFrame:
         data[column] = pd.to_numeric(data[column], errors="coerce")
 
     data["Date"] = pd.to_datetime(data["Date"], errors="coerce")
-    # Keep rows with invalid Quantity so the quality review can show them.
-    # Date, Sales, and Profit are required for the dashboard's filters and KPIs.
-    data = data.dropna(subset=["Date", "Sales", "Profit"]).copy()
+    # Keep invalid numeric rows so the quality review can show them.
+    # Date is required for the dashboard's date filter and time-series charts.
+    data = data.dropna(subset=["Date"]).copy()
 
     # Reusable rule-based checks flag suspicious records without changing source values.
     data = add_quality_flags(data)
