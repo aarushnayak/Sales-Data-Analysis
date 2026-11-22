@@ -86,7 +86,7 @@ class SalesAnalysisTests(unittest.TestCase):
             INVALID_QUANTITY,
             INVALID_PRICE,
             INVALID_SALES,
-            INVALID_PROFIT,
+            f"{NEGATIVE_PROFIT}; {INVALID_PROFIT}",
         ])
 
     def test_quality_flags_requires_sales_and_profit(self):
