@@ -11,6 +11,7 @@ INVALID_QUANTITY = "⚠ Invalid quantity"
 INVALID_PRICE = "⚠ Invalid price"
 INVALID_SALES = "⚠ Invalid sales"
 INVALID_PROFIT = "⚠ Invalid profit"
+INVALID_DATE = "⚠ Invalid date"
 
 
 def add_quality_flags(data: pd.DataFrame) -> pd.DataFrame:
@@ -45,6 +46,9 @@ def add_quality_flags(data: pd.DataFrame) -> pd.DataFrame:
             values = result[column]
             invalid = values.isna() | values.isin([float("inf"), float("-inf")])
             checks.append((invalid, label))
+
+    if "Date" in result.columns:
+        checks.append((result["Date"].isna(), INVALID_DATE))
 
     for mask, label in checks:
         for position, matches in enumerate(mask.fillna(False).to_numpy()):
