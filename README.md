@@ -24,7 +24,7 @@ The app is hosted on Streamlit Community Cloud. The first load may take a little
 - **Product performance:** Identify the top products by sales.
 - **Category contribution:** View each category's share of sales.
 - **CSV exports:** Download filtered records and records flagged for data-quality review.
-- **Data-quality checks:** Flag suspicious sales/profit relationships and missing or non-finite quantity, price, sales, and profit values for review.
+- **Data-quality checks:** Flag suspicious sales/profit relationships, missing or non-finite numeric values, and missing or invalid order dates for review. Invalid-date rows remain visible in the quality review but are excluded from date-based filters and charts.
 - **Automated checks:** Run unit tests and dashboard syntax checks with GitHub Actions.
 
 ## 🧰 Tech Stack
