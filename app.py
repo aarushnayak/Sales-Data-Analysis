@@ -37,9 +37,7 @@ def load_sales_data(path: Path) -> pd.DataFrame:
         data[column] = pd.to_numeric(data[column], errors="coerce")
 
     data["Date"] = pd.to_datetime(data["Date"], errors="coerce")
-    # Keep invalid numeric rows so the quality review can show them.
-    # Date is required for the dashboard's date filter and time-series charts.
-    data = data.dropna(subset=["Date"]).copy()
+    # Retain invalid-date rows for quality review; date-based analytics use valid dates only.
 
     # Reusable rule-based checks flag suspicious records without changing source values.
     data = add_quality_flags(data)
@@ -89,6 +87,7 @@ if not source_issues.empty:
             "⚠ Invalid price": "Price is missing or non-finite. Verify the source record.",
             "⚠ Invalid sales": "Sales is non-finite. Verify the source record.",
             "⚠ Invalid profit": "Profit is non-finite. Verify the source record.",
+            "⚠ Invalid date": "Order date is missing or invalid. This record is kept for review but cannot be used in date-based analytics.",
         }
         issue_view["Why flagged"] = issue_view["Quality_Issue"].map(
             lambda issues: "; ".join(
@@ -123,10 +122,20 @@ if not source_issues.empty:
 else:
     st.success("No obvious data-quality anomalies were detected in the source dataset.")
 
+# Rows without valid dates remain visible in the quality review but cannot be
+# included in date filters or time-series charts.
+valid_date_sales_df = sales_df[sales_df["Date"].notna()].copy()
+if valid_date_sales_df.empty:
+    st.warning(
+        "No records with valid order dates are available for date-based analysis. "
+        "Review the source data-quality warnings above."
+    )
+    st.stop()
+
 # Sidebar filters
 st.sidebar.header("Filter data")
-min_date = sales_df["Date"].min().date()
-max_date = sales_df["Date"].max().date()
+min_date = valid_date_sales_df["Date"].min().date()
+max_date = valid_date_sales_df["Date"].max().date()
 date_range = st.sidebar.date_input(
     "Order date range",
     value=(min_date, max_date),
@@ -162,11 +171,12 @@ include_flagged = st.sidebar.checkbox(
     value=False,
     help=(
         "Off by default so suspicious source values do not distort reported KPIs. "
-        "Turn this on to reconcile the figures against the unfiltered source."
+        "Turn this on to include flagged records that have valid dates. "
+        "Records with invalid dates remain in the quality review because they cannot be placed on the date axis."
     ),
 )
 
-filtered = sales_df.copy()
+filtered = valid_date_sales_df.copy()
 if isinstance(date_range, (tuple, list)) and len(date_range) == 2:
     start_date, end_date = date_range
     filtered = filtered[filtered["Date"].dt.date.between(start_date, end_date)]
@@ -177,7 +187,11 @@ filtered = filtered[
     & filtered["Product"].isin(selected_products)
 ].copy()
 
-st.sidebar.caption(f"Showing {len(filtered):,} of {len(sales_df):,} matching records.")
+invalid_date_count = len(sales_df) - len(valid_date_sales_df)
+st.sidebar.caption(
+    f"Showing {len(filtered):,} of {len(valid_date_sales_df):,} date-valid records. "
+    f"{invalid_date_count:,} invalid-date record(s) remain available in the quality review."
+)
 
 if filtered.empty:
     st.info("No records match the selected filters. Change or clear a filter to continue.")
