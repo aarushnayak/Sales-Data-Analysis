@@ -11,6 +11,7 @@ from analysis import calculate_metrics, validate_dataset
 from data_quality import (
     INVALID_PRICE,
     INVALID_PROFIT,
+    INVALID_DATE,
     INVALID_QUANTITY,
     INVALID_SALES,
     NEGATIVE_PROFIT,
@@ -88,6 +89,19 @@ class SalesAnalysisTests(unittest.TestCase):
             INVALID_SALES,
             f"{NEGATIVE_PROFIT}; {INVALID_PROFIT}",
         ])
+
+    def test_quality_flags_invalid_dates(self):
+        source = pd.DataFrame(
+            {
+                "Date": [pd.Timestamp("2025-01-01"), pd.NaT],
+                "Sales": [100, 100],
+                "Profit": [10, 10],
+            }
+        )
+
+        result = add_quality_flags(source)
+
+        self.assertEqual(result["Quality_Issue"].tolist(), [QUALITY_OK, INVALID_DATE])
 
     def test_quality_flags_requires_sales_and_profit(self):
         with self.assertRaisesRegex(ValueError, "Missing required columns"):
