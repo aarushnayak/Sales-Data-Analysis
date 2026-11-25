@@ -1,5 +1,6 @@
 import sys
 import unittest
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -8,6 +9,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR / "python"))
 
 from analysis import calculate_metrics, validate_dataset
+from dashboard_utils import filter_by_date_selection
 from data_quality import (
     INVALID_PRICE,
     INVALID_PROFIT,
@@ -106,6 +108,36 @@ class SalesAnalysisTests(unittest.TestCase):
     def test_quality_flags_requires_sales_and_profit(self):
         with self.assertRaisesRegex(ValueError, "Missing required columns"):
             add_quality_flags(pd.DataFrame({"Sales": [100]}))
+
+    def test_dashboard_date_filter_single_day_selection(self):
+        source = pd.DataFrame(
+            {
+                "Date": pd.to_datetime(["2025-01-01", "2025-01-02", "2025-01-03"]),
+                "Order_ID": [1, 2, 3],
+            }
+        )
+
+        result = filter_by_date_selection(source, date(2025, 1, 2))
+        one_item_result = filter_by_date_selection(source, (date(2025, 1, 2),))
+
+        self.assertEqual(result["Order_ID"].tolist(), [2])
+        self.assertEqual(one_item_result["Order_ID"].tolist(), [2])
+
+    def test_dashboard_date_filter_range_and_cleared_selection(self):
+        source = pd.DataFrame(
+            {
+                "Date": pd.to_datetime(["2025-01-01", "2025-01-02", "2025-01-03"]),
+                "Order_ID": [1, 2, 3],
+            }
+        )
+
+        ranged = filter_by_date_selection(
+            source, (date(2025, 1, 1), date(2025, 1, 2))
+        )
+        cleared = filter_by_date_selection(source, ())
+
+        self.assertEqual(ranged["Order_ID"].tolist(), [1, 2])
+        self.assertEqual(cleared["Order_ID"].tolist(), [1, 2, 3])
 
     def sample_data(self):
         return pd.DataFrame(

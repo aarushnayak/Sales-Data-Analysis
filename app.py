@@ -10,6 +10,7 @@ import streamlit as st
 ROOT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT_DIR / "python"))
 from data_quality import add_quality_flags
+from dashboard_utils import filter_by_date_selection
 
 DATA_FILE = ROOT_DIR / "data" / "sales_data.csv"
 
@@ -176,10 +177,7 @@ include_flagged = st.sidebar.checkbox(
     ),
 )
 
-filtered = valid_date_sales_df.copy()
-if isinstance(date_range, (tuple, list)) and len(date_range) == 2:
-    start_date, end_date = date_range
-    filtered = filtered[filtered["Date"].dt.date.between(start_date, end_date)]
+filtered = filter_by_date_selection(valid_date_sales_df, date_range)
 
 filtered = filtered[
     filtered["Region"].isin(selected_regions)
