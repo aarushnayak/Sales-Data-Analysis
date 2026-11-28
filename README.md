@@ -116,12 +116,15 @@ Sales-Data-Analysis/
 │   └── sales_data.csv       # Sample sales dataset
 ├── python/
 │   ├── analysis.py          # Python and SQLite analysis pipeline
-│   └── data_quality.py      # Reusable data-quality validation rules
+│   ├── dashboard_utils.py  # Testable dashboard filtering helpers
+│   ├── data_quality.py     # Reusable data-quality validation rules
+│   └── tenant_data.py      # Starter tenant schema and scoped sales reads
 ├── reports/                 # Generated summaries and charts
 ├── sql/
 │   └── analysis_queries.sql # Documented SQL queries
 ├── tests/
-│   └── test_analysis.py     # Unit tests
+│   ├── test_analysis.py     # Analysis and dashboard helper tests
+│   └── test_tenant_data.py  # Tenant isolation boundary tests
 ├── requirements.txt
 └── README.md
 ```
@@ -131,6 +134,29 @@ Sales-Data-Analysis/
 The repository includes a small sample CSV with order IDs, dates, customers, products, categories, regions, quantities, prices, sales, and profit values. The sample covers January 2025, so its trends are illustrative and should not be treated as representative business forecasts.
 
 The dashboard flags records that trigger basic data-quality rules. In the included sample, the Camera order (Order ID **1010**) reports **₹45,000 in sales** and **₹1,00,000 in profit**. This is flagged for source verification. Flagged rows are excluded from KPI and chart calculations by default, but can be included using the sidebar option. The dashboard does not silently change the original CSV.
+
+## 🔐 Multi-user foundation (not yet enabled in the live app)
+
+The current Streamlit demo still reads the shared `data/sales_data.csv` file. It has **no login, no authenticated user identity, and no persistent tenant database**, so it is a public single-dataset demo—not a multi-user application. The existing CSV and demo behavior are unchanged.
+
+A first backend foundation is available in `python/tenant_data.py`:
+
+- **Data model:** `users` stores an opaque identity-provider subject; `businesses` represents a tenant; `business_memberships` grants a user access to a business with a role; and `sales_records` stores orders with a required `business_id`.
+- **Scoped read boundary:** `get_sales_for_user(connection, authenticated_user_id=...)` returns records only where a matching business membership exists. It uses a bound SQL parameter and an `EXISTS` predicate, so multiple memberships do not duplicate sales rows.
+- **Membership semantics:** every member can currently read all sales for that business. The role column establishes the model for later authorization; role-specific writes and admin operations are not implemented.
+- **Safe identity requirement:** the caller must supply the immutable subject from a server-verified authentication result. Never take this value from a query parameter, form field, or client-editable Streamlit session state.
+
+The schema initializer is a small SQLite prototype for local development and tests, not a production migration system. The helper is **not wired into `app.py`**, and it does not provide authentication, tenant-aware uploads/writes, or production database persistence. Do not put real customer data into the current public demo or treat it as isolated.
+
+### Required before production multi-user use
+
+1. Choose and configure a real authentication provider; validate its tokens server-side and map its immutable subject to `users.id`.
+2. Choose a persistent database and migration strategy (a managed PostgreSQL database is a sensible deployment target).
+3. Create/revoke memberships through authorized server-side flows; enforce roles for writes and administrative actions.
+4. Route every dashboard query, aggregate, export, and mutation through tenant-scoped data access. Never trust a client-supplied `business_id`.
+5. Add end-to-end tests for cross-tenant reads and writes, membership revocation, and role enforcement before enabling real accounts.
+
+The six focused tests in `tests/test_tenant_data.py` exercise the starter schema, membership scoping, empty access, required identity, parameter binding, and repeatable initialization. They verify this helper boundary only—not end-to-end application isolation.
 
 ## 👨‍💻 Author
 
